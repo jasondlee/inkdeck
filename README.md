@@ -35,3 +35,12 @@ Currently just a dumping ground.
    - Play round
    - Round played
    - End game
+
+==
+
+Frame Data:
+
+Header: "ID" (2 bytes)
+Length: int + 4 (4 bytes)
+Type: int (4 bytes)
+Body: $LENGTH bytes
