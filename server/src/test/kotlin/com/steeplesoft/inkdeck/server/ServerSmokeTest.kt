@@ -20,7 +20,7 @@ class ServerSmokeTest {
         @BeforeAll
         @JvmStatic
         fun startServer() {
-            System.err.println("***** Starting server")
+            System.err. println("***** Starting server")
             server = InkDeckServer()
             server.start()
         }

@@ -10,19 +10,19 @@ import io.netty.channel.SimpleChannelInboundHandler
 
 class InkDeckServerHandler(private val gameHandler : InkDeckGameManager) : SimpleChannelInboundHandler<InkDeckMessage>() {
     override fun handlerAdded(ctx: ChannelHandlerContext?) {
-        println("InkDeckServerHandler added: $this - $ctx")
+        println("[Server] InkDeckServerHandler added: $this - $ctx")
     }
 
     override fun handlerRemoved(ctx: ChannelHandlerContext?) {
-        println("InkDeckServerHandler removed")
+        println("[Server] InkDeckServerHandler removed")
     }
 
     override fun channelRead0(ctx: ChannelHandlerContext, msg: InkDeckMessage) {
-        println(msg)
+        println("[Server] channelRead0: msg = '$msg'")
 
         val response : InkDeckMessage = when (msg.type) {
             InkDeckMessageType.LIST_GAMES -> GameListMessage(gameHandler.listGames())
-            InkDeckMessageType.DUMMY -> DummyMessage("dummy")
+            InkDeckMessageType.DUMMY -> DummyMessage("Message received: " + (msg as DummyMessage).text)
             else -> ErrorMessage("Not a known InkDeck message type: ${msg.type}")
         }
 

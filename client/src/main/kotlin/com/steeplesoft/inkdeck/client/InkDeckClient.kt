@@ -81,7 +81,7 @@ class InkDeckClient(private val host: String, private val port: Int) {
                 while (!clientClosed) {
                     val message = queue.poll(500, TimeUnit.MILLISECONDS)
                     message?.let {
-                        println("Writing $message")
+                        println("[Client] Writing '$message'")
                         ctx.writeAndFlush(message)
                     }
                 }
@@ -89,7 +89,7 @@ class InkDeckClient(private val host: String, private val port: Int) {
         }
 
         override fun channelRead0(ctx: ChannelHandlerContext, msg: InkDeckMessage) {
-            println(msg)
+            println("[Client] channelRead0: msg = '$msg'")
         }
 
     }
