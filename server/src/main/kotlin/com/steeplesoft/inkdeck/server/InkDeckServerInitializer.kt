@@ -1,5 +1,6 @@
 package com.steeplesoft.inkdeck.server
 
+import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageCodec
 import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageDecoder
 import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageEncoder
 import io.netty.channel.ChannelInitializer
@@ -18,9 +19,10 @@ class InkDeckServerInitializer(private val sslCtx: SslContext?) : ChannelInitial
         }
 
         pipeline.addLast(LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2, 4, 0, 0))
-        pipeline.addLast(InkDeckMessageDecoder())
+        pipeline.addLast(InkDeckMessageCodec())
+//        pipeline.addLast(InkDeckMessageDecoder())
         pipeline.addLast(StringEncoder())
-        pipeline.addLast(InkDeckMessageEncoder())
+//        pipeline.addLast(InkDeckMessageEncoder())
 
         pipeline.addLast(InkDeckServerHandler(InkDeckGameManager()))
     }

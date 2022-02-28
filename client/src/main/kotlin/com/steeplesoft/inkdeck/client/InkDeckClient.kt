@@ -1,5 +1,6 @@
 package com.steeplesoft.inkdeck.client
 
+import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageCodec
 import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageDecoder
 import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageEncoder
 import com.steeplesoft.inkdeck.shared.messages.InkDeckMessage
@@ -34,8 +35,7 @@ class InkDeckClient(host: String, port: Int) {
         clientBootstrap.handler(object : ChannelInitializer<SocketChannel>() {
             override fun initChannel(socketChannel: SocketChannel) {
                 socketChannel.pipeline().addLast(
-                    InkDeckMessageDecoder(),
-                    InkDeckMessageEncoder(),
+                    InkDeckMessageCodec(),
                     StringDecoder(),
                     clientHandler
                 )
@@ -57,7 +57,7 @@ class InkDeckClient(host: String, port: Int) {
     }
 
     private class InkDeckClientHandler : SimpleChannelInboundHandler<InkDeckMessage>() {
-        private var sequence = AtomicInteger()
+        private var sequence = 1
         private var channelContext: ChannelHandlerContext? = null
         private val queue = HashMap<Int, Promise<InkDeckMessage>>()
 //            ArrayBlockingQueue<Promise<InkDeckMessage>>(16)
@@ -75,7 +75,7 @@ class InkDeckClient(host: String, port: Int) {
                     // Connection closed
                     prom.setFailure(IllegalStateException())
                 } else {
-                    message.messageId = sequence.getAndIncrement()
+                    message.messageId = sequence++
                     queue[message.messageId!!] = prom
                     channelContext!!.writeAndFlush(message)
                 }
@@ -106,7 +106,7 @@ class InkDeckClient(host: String, port: Int) {
         override fun channelRead0(ctx: ChannelHandlerContext, msg: InkDeckMessage) {
             synchronized(this) {
                 if (queue != null) {
-                    val prom = queue[msg.messageId]
+                    val prom = queue.remove(msg.messageId)
                     prom?.let {
                         it.setSuccess(msg)
                         println("[Client] channelRead0: msg = '$msg'")

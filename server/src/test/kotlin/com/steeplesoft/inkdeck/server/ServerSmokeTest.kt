@@ -25,7 +25,7 @@ class ServerSmokeTest {
         @BeforeAll
         @JvmStatic
         fun startServer() {
-            System.err. println("***** Starting server")
+            System.err.println("***** Starting server")
             server = InkDeckServer()
             server.start()
         }
@@ -40,13 +40,29 @@ class ServerSmokeTest {
 
     @Test
     fun testServer() {
+        var count = 0;
         val client1 = InkDeckClient("localhost", 49152)
         val client2 = InkDeckClient("localhost", 49152)
 
-        client1.sendMessage(DummyMessage("Message from client 1"))
-        client2.sendMessage(DummyMessage("Message from client 2"))
-        client1.sendMessage(DummyMessage("Another message from client 1"))
+        client1.sendMessage(DummyMessage("Message from client 1")).addListener {
+            println(it.get() as InkDeckMessage)
+            count--
+        }
+        count++
+        client2.sendMessage(DummyMessage("Message from client 2")).addListener {
+            println(it.get() as InkDeckMessage)
+            count--
+        }
+        count++
+        client1.sendMessage(DummyMessage("Another message from client 1")).addListener {
+            println(it.get() as InkDeckMessage)
+            count--
+        }
+        count++
 
+        while (count != 0) {
+            Thread.sleep(500)
+        }
         client1.disconnect()
         client2.disconnect()
     }
