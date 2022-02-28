@@ -2,15 +2,20 @@ package com.steeplesoft.inkdeck.server
 
 import com.steeplesoft.inkdeck.client.InkDeckClient
 import com.steeplesoft.inkdeck.shared.messages.DummyMessage
+import com.steeplesoft.inkdeck.shared.messages.GameListMessage
+import com.steeplesoft.inkdeck.shared.messages.InkDeckMessage
 import com.steeplesoft.inkdeck.shared.messages.ListGamesMessage
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.util.CharsetUtil
+import io.netty.util.concurrent.Future
+import io.netty.util.concurrent.Promise
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 class ServerSmokeTest {
@@ -50,11 +55,18 @@ class ServerSmokeTest {
     fun testListGames() {
         val client1 = InkDeckClient("localhost", 49152)
 
-        client1.sendMessage(ListGamesMessage())
+        var waiting = true
 
-        Thread.sleep(5000)
+        client1.sendMessage(ListGamesMessage()).addListener {
+            val message = it.get() as InkDeckMessage
+            println("games = ${(message as GameListMessage).games}")
+            waiting = false
+            client1.disconnect()
+        }
 
-        client1.disconnect()
+        while (waiting) {
+            Thread.sleep(500)
+        }
     }
 }
 

@@ -13,11 +13,16 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.string.StringDecoder
+import io.netty.util.concurrent.Future
+import io.netty.util.concurrent.Promise
+import java.io.IOException
+import java.nio.BufferOverflowException
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
-class InkDeckClient(private val host: String, private val port: Int) {
+
+class InkDeckClient(host: String, port: Int) {
     private val clientHandler = InkDeckClientHandler()
     private var channelFuture: ChannelFuture
     private val group: EventLoopGroup = NioEventLoopGroup()
@@ -40,8 +45,8 @@ class InkDeckClient(private val host: String, private val port: Int) {
 
     }
 
-    fun sendMessage(msg: InkDeckMessage) {
-        clientHandler.sendMessage(msg)
+    fun sendMessage(msg: InkDeckMessage): Future<InkDeckMessage> {
+        return clientHandler.sendMessage(msg)
     }
 
     fun disconnect() {
@@ -52,44 +57,62 @@ class InkDeckClient(private val host: String, private val port: Int) {
     }
 
     private class InkDeckClientHandler : SimpleChannelInboundHandler<InkDeckMessage>() {
-        private lateinit var channelContext: ChannelHandlerContext
-        private val queue = ArrayBlockingQueue<InkDeckMessage>(10, true)
+        private var sequence = AtomicInteger()
+        private var channelContext: ChannelHandlerContext? = null
+        private val queue = HashMap<Int, Promise<InkDeckMessage>>()
+//            ArrayBlockingQueue<Promise<InkDeckMessage>>(16)
         private var clientClosed = false
 
-        fun sendMessage(message: InkDeckMessage) {
-            if (!clientClosed) {
-                queue.add(message)
+        fun sendMessage(message: InkDeckMessage): Future<InkDeckMessage> {
+            channelContext?.let {
+                return sendMessage(message, channelContext!!.executor().newPromise());
+            } ?: throw IllegalStateException()
+        }
+
+        private fun sendMessage(message: InkDeckMessage, prom: Promise<InkDeckMessage>): Future<InkDeckMessage> {
+            synchronized(this) {
+                if (clientClosed) {
+                    // Connection closed
+                    prom.setFailure(IllegalStateException())
+                } else {
+                    message.messageId = sequence.getAndIncrement()
+                    queue[message.messageId!!] = prom
+                    channelContext!!.writeAndFlush(message)
+                }
+                return prom
             }
         }
 
         fun disconnect() {
-            if (::channelContext.isInitialized) {
-                var tries = 0;
-                while (queue.isNotEmpty() && tries < 10) {
-                    tries++
-                    Thread.sleep(500)
-                }
-
-                clientClosed = true
-                channelContext.close()
+            clientClosed = true
+            channelContext?.let {
+                channelContext!!.close()
+                channelContext = null
             }
         }
 
         override fun channelActive(ctx: ChannelHandlerContext) {
+            super.channelActive(ctx)
             channelContext = ctx;
-            thread(start = true) {
-                while (!clientClosed) {
-                    val message = queue.poll(500, TimeUnit.MILLISECONDS)
-                    message?.let {
-                        println("[Client] Writing '$message'")
-                        ctx.writeAndFlush(message)
-                    }
-                }
+        }
+
+        override fun channelInactive(ctx: ChannelHandlerContext?) {
+            super.channelInactive(ctx)
+            synchronized(this) {
+                queue.values.forEach { m -> m.setFailure(IOException("Connection lost")) }
             }
         }
 
         override fun channelRead0(ctx: ChannelHandlerContext, msg: InkDeckMessage) {
-            println("[Client] channelRead0: msg = '$msg'")
+            synchronized(this) {
+                if (queue != null) {
+                    val prom = queue[msg.messageId]
+                    prom?.let {
+                        it.setSuccess(msg)
+                        println("[Client] channelRead0: msg = '$msg'")
+                    }
+                }
+            }
         }
 
     }

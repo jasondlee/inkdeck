@@ -26,6 +26,8 @@ class InkDeckServerHandler(private val gameHandler : InkDeckGameManager) : Simpl
             else -> ErrorMessage("Not a known InkDeck message type: ${msg.type}")
         }
 
+        response.messageId = msg.messageId
+
         ctx.writeAndFlush(response)
     }
 }

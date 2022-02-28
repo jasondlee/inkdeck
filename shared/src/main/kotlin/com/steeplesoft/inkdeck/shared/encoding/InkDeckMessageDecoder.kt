@@ -19,8 +19,9 @@ class InkDeckMessageDecoder : ByteToMessageDecoder() {
     override fun decode(ctx: ChannelHandlerContext, msg: ByteBuf, list: MutableList<Any>) {
         val header = msg.readCharSequence(2, CharsetUtil.UTF_8)
         val length = msg.readInt()
+        val messageId = msg.readInt()
         val type = InkDeckMessageType.valueOf(msg.readInt())
-        val body = if (length > 0) msg.readBytes(length - 4).toString(CharsetUtil.UTF_8) else null
+        val body = if (length > 0) msg.readBytes(length - (4 * 2)).toString(CharsetUtil.UTF_8) else null
 
         if (header != "ID") {
             println("Invalid message: header=$header type=$type body=$body")
@@ -33,6 +34,7 @@ class InkDeckMessageDecoder : ByteToMessageDecoder() {
             DUMMY -> DummyMessage(body!!)
             else -> ErrorMessage("Not a known InkDeck message type: $type")
         }
+        message.messageId = messageId
         list.add(message)
     }
 
