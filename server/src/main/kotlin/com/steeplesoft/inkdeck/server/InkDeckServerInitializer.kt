@@ -1,8 +1,6 @@
 package com.steeplesoft.inkdeck.server
 
 import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageCodec
-import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageDecoder
-import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageEncoder
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder

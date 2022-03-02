@@ -6,6 +6,7 @@ import com.steeplesoft.inkdeck.shared.messages.DummyMessage
 import com.steeplesoft.inkdeck.shared.messages.ErrorMessage
 import com.steeplesoft.inkdeck.shared.messages.GameListMessage
 import com.steeplesoft.inkdeck.shared.messages.InkDeckMessage
+import com.steeplesoft.inkdeck.shared.messages.JoinGameMessage
 import com.steeplesoft.inkdeck.shared.messages.ListGamesMessage
 import com.steeplesoft.inkdeck.shared.model.Game
 import com.steeplesoft.inkdeck.shared.model.InkDeckMessageType
@@ -14,7 +15,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageCodec
 import io.netty.util.CharsetUtil
-import java.lang.IllegalArgumentException
+import java.util.UUID
 
 class InkDeckMessageCodec :ByteToMessageCodec<InkDeckMessage>() {
     override fun encode(ctx: ChannelHandlerContext, msg: InkDeckMessage, out: ByteBuf) {
@@ -34,13 +35,16 @@ class InkDeckMessageCodec :ByteToMessageCodec<InkDeckMessage>() {
         val body = if (length > 0) msg.readBytes(length - (4 * 2)).toString(CharsetUtil.UTF_8) else null
 
         if (header != "ID") {
-            println("Invalid message: header=$header type=$type body=$body")
             throw IllegalArgumentException("Not an InkDeck message: $header")
         }
 
         val message = when (type) {
             InkDeckMessageType.LIST_GAMES -> ListGamesMessage()
             InkDeckMessageType.GAMES_LIST -> GameListMessage(Gson().fromJson<List<Game>>(body!!, TypeTokens.GAMES_LIST_TYPE))
+            InkDeckMessageType.JOIN_GAME -> {
+                val parts = body!!.split("|")
+                JoinGameMessage(UUID.fromString(parts[0]), UUID.fromString(parts[1]))
+            }
             InkDeckMessageType.DUMMY -> DummyMessage(body!!)
             else -> ErrorMessage("Not a known InkDeck message type: $type")
         }

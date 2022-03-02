@@ -1,8 +1,6 @@
 package com.steeplesoft.inkdeck.client
 
 import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageCodec
-import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageDecoder
-import com.steeplesoft.inkdeck.shared.encoding.InkDeckMessageEncoder
 import com.steeplesoft.inkdeck.shared.messages.InkDeckMessage
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
@@ -17,13 +15,11 @@ import io.netty.handler.codec.string.StringDecoder
 import io.netty.util.concurrent.Future
 import io.netty.util.concurrent.Promise
 import java.io.IOException
-import java.nio.BufferOverflowException
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
+import java.util.UUID
 
 
 class InkDeckClient(host: String, port: Int) {
+    val id = UUID.randomUUID()
     private val clientHandler = InkDeckClientHandler()
     private var channelFuture: ChannelFuture
     private val group: EventLoopGroup = NioEventLoopGroup()

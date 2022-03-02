@@ -1,19 +1,20 @@
 package com.steeplesoft.inkdeck.shared.encoding
 
 import com.google.gson.Gson
+import com.steeplesoft.inkdeck.shared.TypeTokens.Companion.GAMES_LIST_TYPE
 import com.steeplesoft.inkdeck.shared.messages.DummyMessage
 import com.steeplesoft.inkdeck.shared.messages.ErrorMessage
 import com.steeplesoft.inkdeck.shared.messages.GameListMessage
 import com.steeplesoft.inkdeck.shared.messages.ListGamesMessage
 import com.steeplesoft.inkdeck.shared.model.Game
 import com.steeplesoft.inkdeck.shared.model.InkDeckMessageType
-import com.steeplesoft.inkdeck.shared.model.InkDeckMessageType.*
-import com.steeplesoft.inkdeck.shared.TypeTokens.Companion.GAMES_LIST_TYPE
+import com.steeplesoft.inkdeck.shared.model.InkDeckMessageType.DUMMY
+import com.steeplesoft.inkdeck.shared.model.InkDeckMessageType.GAMES_LIST
+import com.steeplesoft.inkdeck.shared.model.InkDeckMessageType.LIST_GAMES
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
 import io.netty.util.CharsetUtil
-import java.lang.IllegalArgumentException
 
 class InkDeckMessageDecoder : ByteToMessageDecoder() {
     override fun decode(ctx: ChannelHandlerContext, msg: ByteBuf, list: MutableList<Any>) {
@@ -24,7 +25,6 @@ class InkDeckMessageDecoder : ByteToMessageDecoder() {
         val body = if (length > 0) msg.readBytes(length - (4 * 2)).toString(CharsetUtil.UTF_8) else null
 
         if (header != "ID") {
-            println("Invalid message: header=$header type=$type body=$body")
             throw IllegalArgumentException("Not an InkDeck message: $header")
         }
 
