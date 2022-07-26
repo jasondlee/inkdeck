@@ -24,6 +24,7 @@
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>inkdeck-client</artifactId>
@@ -57,7 +58,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>11</jvmTarget>
                 </configuration>
             </plugin>
         </plugins>

@@ -12,6 +12,8 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.string.StringDecoder
+import io.netty.handler.logging.LogLevel
+import io.netty.handler.logging.LoggingHandler
 import io.netty.util.concurrent.Future
 import io.netty.util.concurrent.Promise
 import java.io.IOException
@@ -31,6 +33,7 @@ class InkDeckClient(host: String, port: Int) {
         clientBootstrap.handler(object : ChannelInitializer<SocketChannel>() {
             override fun initChannel(socketChannel: SocketChannel) {
                 socketChannel.pipeline().addLast(
+                    LoggingHandler(LogLevel.DEBUG),
                     InkDeckMessageCodec(),
                     StringDecoder(),
                     clientHandler

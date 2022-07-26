@@ -87,15 +87,26 @@ class ServerSmokeTest {
     fun joinGame() {
 
         val client = InkDeckClient("localhost", 49152)
-        client.sendMessage(ListGamesMessage()).addListener {
-            val resp = it.get() as GameListMessage
-            client.sendMessage(JoinGameMessage(client.id, resp.games[0].id)).addListener {
-                val resp = it.get() as InkDeckMessage
-                println(resp)
+        var gameList: GameListMessage? = null
+
+        client.sendMessage(ListGamesMessage())
+            .addListener {
+                gameList = it.get() as GameListMessage
             }
-        }
 
         var waiting = true
+        while (waiting) {
+            gameList?.let {
+                client.sendMessage(JoinGameMessage(client.id, gameList!!.games[0].id))
+                    .addListener {
+                        val resp = it.get() as InkDeckMessage
+                        println(resp)
+                        waiting = false
+                    }
+            }
+            Thread.sleep(500)
+        }
+
         while (waiting) {
             Thread.sleep(500)
         }
